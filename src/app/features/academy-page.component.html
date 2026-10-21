@@ -1,0 +1,151 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="#inizio" (click)="page.set('overview'); $event.preventDefault()">
+      <span class="brand-mark" aria-hidden="true">C</span>
+      <span><strong>CLAUDE<br>ACADEMY ITALIA</strong><small>PERCORSO INDIPENDENTE</small></span>
+    </a>
+    <p class="nav-label">IL TUO SPAZIO</p>
+    <nav aria-label="Navigazione principale">
+      <button class="nav-item" [class.active]="page() === 'overview'" (click)="page.set('overview')"><span>⌂</span>Panoramica</button>
+      <button class="nav-item" [class.active]="page() === 'lesson'" (click)="openModule(selectedModule())"><span>▤</span>Percorso di studio</button>
+      <button class="nav-item" [class.active]="page() === 'quiz' || page() === 'summary'" (click)="startQuiz()"><span>◉</span>Ripasso guidato</button>
+      <button class="nav-item" [class.active]="page() === 'sources'" (click)="page.set('sources')"><span>◎</span>Fonti e certificazione</button>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="cert-note">
+      <span class="status-dot"></span>
+      <div><small>CERTIFICAZIONE</small><strong>Nome Associate<br>non verificato</strong></div>
+    </div>
+    <p class="sidebar-disclaimer">Indipendente. Non affiliato, approvato o sponsorizzato da Anthropic.</p>
+  </aside>
+
+  <main class="main-column">
+    <header class="topbar">
+      <div class="breadcrumbs"><span>Workspace</span><span>/</span><strong>{{ page() === 'lesson' ? selectedModule().title : page() === 'quiz' ? 'Ripasso guidato' : page() === 'summary' ? 'Risultato' : page() === 'sources' ? 'Fonti e verifica' : 'Panoramica' }}</strong></div>
+      <button class="mouse-mode" type="button" [attr.aria-pressed]="clickOnly()" (click)="clickOnly.set(!clickOnly())">
+        <span aria-hidden="true">{{ clickOnly() ? '●' : '○' }}</span> {{ clickOnly() ? 'Solo mouse attiva' : 'Attiva solo mouse' }}
+      </button>
+    </header>
+
+    @if (page() === 'overview') {
+      <section class="page-content">
+        <div class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">ACADEMY INDIPENDENTE · STUDIO PRATICO</p>
+            <h1>Competenze utili.<br><em>Scelte verificabili.</em></h1>
+            <p>Un percorso in italiano per progettare applicazioni con Claude, dalle basi alla produzione. Piccole sessioni, esempi vicini al tuo lavoro e progressi salvati.</p>
+            <div class="hero-actions">
+              <button class="button primary" (click)="openModule(modules[0])">Inizia a studiare <span aria-hidden="true">→</span></button>
+              <button class="button secondary" (click)="page.set('sources')">Verifica le fonti</button>
+            </div>
+            <div class="cert-disclaimer"><strong>Trasparenza sulla certificazione</strong><p>“Claude Associate” non è stato verificato come titolo ufficiale. La certificazione documentata dalle fonti è Claude Certified Architect – Foundations, nel contesto del Claude Partner Network.</p></div>
+          </div>
+          <div class="hero-art" aria-label="Percorso di studio composto da diciassette moduli">
+            <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+            <div class="orbit-core"><span>AI</span><strong>17</strong><small>MODULI</small></div>
+            <div class="orbit-label label-top">PRATICA</div><div class="orbit-label label-right">SICUREZZA</div><div class="orbit-label label-bottom">VALUTAZIONE</div>
+          </div>
+        </div>
+
+        <section class="study-settings" aria-labelledby="study-mode-heading">
+          <div><p class="eyebrow">SCEGLI IL RITMO</p><h2 id="study-mode-heading">Una sessione alla volta</h2><p>Un solo obiettivo principale. Riprendi quando vuoi.</p></div>
+          <div class="mode-options" role="group" aria-label="Modalità di studio">
+            <button [class.selected]="studyMode() === 'rapida'" [attr.aria-pressed]="studyMode() === 'rapida'" (click)="chooseMode('rapida')"><strong>Rapida</strong><span>10–15 min</span></button>
+            <button [class.selected]="studyMode() === 'standard'" [attr.aria-pressed]="studyMode() === 'standard'" (click)="chooseMode('standard')"><strong>Standard</strong><span>25–40 min</span></button>
+            <button [class.selected]="studyMode() === 'approfondita'" [attr.aria-pressed]="studyMode() === 'approfondita'" (click)="chooseMode('approfondita')"><strong>Approfondita</strong><span>60–90 min</span></button>
+          </div>
+        </section>
+
+        <section class="progress-panel" aria-label="Avanzamento del percorso">
+          <div class="progress-heading"><div><p class="eyebrow">IL TUO AVANZAMENTO</p><strong>{{ completedModuleIds().length }} di {{ modules.length }} moduli completati</strong></div><span>{{ progressPercent() }}%</span></div>
+          <div class="progress-track" role="progressbar" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100" aria-label="Avanzamento percorso"><span [style.width.%]="progressPercent()"></span></div>
+          <p class="sync-status" role="status">{{ syncMessage() }}</p>
+        </section>
+
+        <div class="section-title"><div><p class="eyebrow">IL PROGRAMMA</p><h2>Dal primo prompt alla produzione</h2></div><button class="text-button" (click)="startQuiz()">Fai il ripasso guidato →</button></div>
+        <div class="module-grid">
+          @for (module of modules; track module.id) {
+            <button class="module-card" [class.completed]="isComplete(module.id)" (click)="openModule(module)">
+              <div class="module-top"><span class="module-number">{{ module.number < 10 ? '0' + module.number : module.number }}</span><span class="completion-mark">{{ isComplete(module.id) ? '✓' : '↗' }}</span></div>
+              <p class="module-area">{{ module.area }}</p><h3>{{ module.title }}</h3>
+              <p class="module-objective">{{ module.objective }}</p>
+              <span class="module-time">{{ module.minutes }} min · {{ studyMode() === 'rapida' ? 'ripasso essenziale' : studyMode() === 'approfondita' ? 'con laboratorio e test' : 'spiegazione e quiz' }}</span>
+            </button>
+          }
+        </div>
+      </section>
+    }
+
+    @if (page() === 'lesson') {
+      <section class="page-content lesson-page">
+        <button class="back-button" (click)="page.set('overview')">← Torna al percorso</button>
+        <p class="eyebrow">MODULO {{ selectedModule().number }} · {{ selectedModule().area }}</p>
+        <h1>{{ selectedModule().title }}</h1>
+        <p class="lesson-objective">{{ selectedModule().objective }}</p>
+        <div class="explanation-grid">
+          <article class="explanation-card simple"><span class="card-kicker">IN PAROLE SEMPLICI</span><p>{{ selectedModule().simpleExplanation }}</p></article>
+          <article class="explanation-card technical"><span class="card-kicker">POI, PIÙ TECNICO</span><p>{{ selectedModule().technicalExplanation }}</p></article>
+        </div>
+        <section class="topic-panel"><h2>In questa sessione</h2><ul>@for (topic of selectedModule().topics; track topic) { <li>{{ topic }}</li> }</ul></section>
+        <section class="practice-panel"><div><p class="eyebrow">MINI LABORATORIO</p><h2>Prova con un caso vicino al tuo lavoro</h2><p>{{ selectedModule().practice }}</p></div><span class="practice-icon" aria-hidden="true">✳</span></section>
+        <section class="quiz-preview"><div><p class="eyebrow">CONTROLLO RAPIDO</p><h2>Verifica una cosa alla volta</h2><p>{{ selectedModule().question.prompt }}</p></div><button class="button primary" (click)="startQuiz()">Apri il ripasso →</button></section>
+        <a class="source-link" [href]="currentSource().url" target="_blank" rel="noopener noreferrer">Fonte ufficiale per approfondire: {{ currentSource().title }} ↗</a>
+        <div class="lesson-actions"><button class="button secondary" (click)="page.set('overview')">Continua dopo</button><button class="button primary" (click)="completeSelectedModule()">{{ isComplete(selectedModule().id) ? 'Modulo completato ✓' : 'Segna come completato' }}</button></div>
+      </section>
+    }
+
+    @if (page() === 'quiz') {
+      <section class="page-content quiz-page">
+        <button class="back-button" (click)="page.set('overview')">← Esci dal ripasso</button>
+        <p class="eyebrow">RIPASSO INDIPENDENTE · NON È UN ESAME</p>
+        <div class="quiz-heading"><div><h1>Una domanda alla volta.</h1><p>Domande originali di autovalutazione, non tratte né ricostruite da esami.</p></div><span class="question-counter">{{ quizIndex() + 1 }} / {{ questionCount }}</span></div>
+        <div class="quiz-progress" role="progressbar" [attr.aria-valuenow]="quizIndex() + 1" [attr.aria-valuemin]="1" [attr.aria-valuemax]="questionCount" aria-label="Avanzamento ripasso"><span [style.width.%]="((quizIndex() + 1) / questionCount) * 100"></span></div>
+        <article class="question-card">
+          <p class="question-area">MODULO {{ quizModule().number }} · {{ quizModule().title }}</p><h2>{{ quizQuestion().prompt }}</h2>
+          <div class="answer-options" role="group" aria-label="Scegli una risposta">
+            @for (option of quizQuestion().options; track option; let index = $index) {
+              <button class="answer-option" [class.chosen]="answerIndex() === index" [class.correct]="answerSubmitted() && index === quizQuestion().correctIndex" [class.incorrect]="answerSubmitted() && answerIndex() === index && index !== quizQuestion().correctIndex" [disabled]="answerSubmitted()" [attr.aria-pressed]="answerIndex() === index" (click)="chooseAnswer(index)">
+                <span class="option-letter">{{ 'ABCD'.charAt(index) }}</span><span>{{ option }}</span><span class="option-result">{{ answerSubmitted() && index === quizQuestion().correctIndex ? '✓' : answerSubmitted() && answerIndex() === index ? '×' : '' }}</span>
+              </button>
+            }
+          </div>
+          @if (!answerSubmitted()) {
+            <button class="button primary submit-answer" [disabled]="answerIndex() === null" (click)="submitAnswer()">Conferma risposta</button>
+          } @else {
+            <section class="answer-feedback" [class.feedback-correct]="answerIndex() === quizQuestion().correctIndex" aria-live="polite">
+              <strong>{{ answerIndex() === quizQuestion().correctIndex ? 'Esatto: risposta corretta.' : 'Non ancora: rivediamo il concetto.' }}</strong>
+              <p>{{ quizQuestion().explanation }}</p>
+              <details><summary>Perché le altre opzioni non vanno bene</summary><ul>@for (reason of quizQuestion().wrongOptions; track reason) { <li>{{ reason }}</li> }</ul></details>
+              <p class="review-topic"><strong>Da ripassare:</strong> {{ quizQuestion().review }}</p>
+              <a class="source-link" [href]="quizSource().url" target="_blank" rel="noopener noreferrer">Apri la fonte ufficiale: {{ quizSource().title }} ↗</a>
+              <button class="button primary next-question" (click)="nextQuestion()">{{ quizIndex() + 1 === questionCount ? 'Vedi il riepilogo' : 'Prossima domanda →' }}</button>
+            </section>
+          }
+        </article>
+        @if (clickOnly()) { <p class="mouse-note">Modalità solo mouse: seleziona una risposta e prosegui con i pulsanti. Non devi scrivere.</p> }
+      </section>
+    }
+
+    @if (page() === 'summary') {
+      <section class="page-content summary-page">
+        <div class="summary-card"><p class="eyebrow">RIPASSO COMPLETATO</p><h1>{{ correctAnswers() }} risposte corrette su {{ questionCount }}</h1><p>Questa è un’autovalutazione del percorso, non un punteggio o una simulazione dell’esame ufficiale.</p><div class="summary-score">{{ summaryPercent() }}<small>%</small></div><button class="button primary" (click)="startQuiz()">Ripeti il ripasso</button><button class="button secondary" (click)="page.set('overview')">Torna ai moduli</button></div>
+      </section>
+    }
+
+    @if (page() === 'sources') {
+      <section class="page-content sources-page">
+        <p class="eyebrow">TRASPARENZA E AGGIORNAMENTO</p><h1>Prima le fonti.<br><em>Poi le affermazioni.</em></h1>
+        <p class="sources-intro">Fonti primarie Anthropic, documentazione tecnica ufficiale e documenti ufficiali dei provider. Verifica registrata il 21 ottobre 2026; le pagine di prodotto possono cambiare.</p>
+        <div class="cert-status-card"><span class="status-label">ESITO DELLA VERIFICA</span><h2>“Claude Associate” non verificata come certificazione ufficiale</h2><p>Le fonti correnti documentano “Claude Certified Architect – Foundations”. La pagina ufficiale di Anthropic Partner Academy mostra Exam Guide e policy; la partecipazione è nel contesto del Claude Partner Network. Questo progetto resta un percorso indipendente.</p><a href="https://anthropic-partners.skilljar.com/claude-certified-architect-foundations-certification" target="_blank" rel="noopener noreferrer">Apri la pagina Academy ↗</a></div>
+        <div class="source-list">
+          @for (module of modules; track module.id) {
+            <article class="source-row"><span class="source-module">{{ module.number < 10 ? '0' + module.number : module.number }}</span><div><strong>{{ sourceFor(module).title }}</strong><span>Ente ufficiale · consultato il 21 ottobre 2026 · {{ module.title }}</span></div><a [href]="sourceFor(module).url" target="_blank" rel="noopener noreferrer" [attr.aria-label]="'Apri ' + sourceFor(module).title + ' in una nuova scheda'">↗</a></article>
+          }
+        </div>
+        <a class="button secondary docs-link" href="https://github.com/federicocroletti-tech/claude-associate-academy-italia/tree/main/docs" target="_blank" rel="noopener noreferrer">Registro completo fonti e verifica certificazione ↗</a>
+      </section>
+    }
+
+    <footer class="footer-note"><span aria-hidden="true">ⓘ</span><p><strong>Percorso indipendente e non ufficiale.</strong> Anthropic, Claude e i relativi marchi appartengono ai rispettivi titolari. Non usare questo materiale come sostituto della documentazione aggiornata o di una revisione di sicurezza professionale.</p></footer>
+  </main>
+</div>

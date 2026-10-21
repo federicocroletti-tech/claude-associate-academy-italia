@@ -1,0 +1,35 @@
+{
+  "name": "claude-associate-academy-italia",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "start": "node dist/server/server.js",
+    "dev": "concurrently -k \"ng serve --proxy-config proxy.conf.json\" \"tsx watch server/server.ts\"",
+    "build": "ng build --configuration production && tsc -p tsconfig.server.json",
+    "test": "ng test --watch=false",
+    "test:server": "npm run build:server && node --test dist/server/server.test.js",
+    "build:server": "tsc -p tsconfig.server.json"
+  },
+  "dependencies": {
+    "@angular/common": "^22.0.0",
+    "@angular/compiler": "^22.0.0",
+    "@angular/core": "^22.0.0",
+    "@angular/platform-browser": "^22.0.0",
+    "@angular/router": "^22.0.0",
+    "express": "^5.1.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.8.1",
+    "zone.js": "~0.15.1"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.0.0",
+    "@angular/cli": "^22.0.0",
+    "@angular/compiler-cli": "^22.0.0",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.15.30",
+    "concurrently": "^9.2.0",
+    "tsx": "^4.19.4",
+    "typescript": "~6.0.2"
+  }
+}
