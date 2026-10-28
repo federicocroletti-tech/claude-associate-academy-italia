@@ -44,6 +44,9 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "github-pages": {
+              "baseHref": "/claude-associate-academy-italia/"
             }
           },
           "defaultConfiguration": "production"

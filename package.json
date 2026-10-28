@@ -7,7 +7,8 @@
     "start": "node dist/server/server.js",
     "dev": "concurrently -k \"ng serve --proxy-config proxy.conf.json\" \"tsx watch server/server.ts\"",
     "build": "ng build --configuration production && tsc -p tsconfig.server.json",
-    "test": "ng test --watch=false",
+    "build:pages": "ng build --configuration production,github-pages",
+    "test": "tsx --test tests/learning-data.test.ts",
     "test:server": "npm run build:server && node --test dist/server/server.test.js",
     "build:server": "tsc -p tsconfig.server.json"
   },

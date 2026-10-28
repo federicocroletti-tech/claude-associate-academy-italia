@@ -12,11 +12,11 @@ Questo progetto vuole essere una risorsa di studio pratica e autonoma, senza far
 - sezione di approfondimento e fonti ufficiali
 - quiz interattivi con feedback
 - salvataggio del progresso in localStorage
-- API lightweight per il tracking del progresso
+- progressi privati e limitati al browser corrente; non vengono sincronizzati con un account o un server
 
 ## Verifica ufficiale
 
-Il progetto non presenta alcuna certificazione ufficiale o approvazione di Anthropic. Il percorso è un laboratorio indipendente di apprendimento basato su risorse pubbliche e documentate.
+Il progetto è indipendente e non presenta alcuna certificazione ufficiale o approvazione di Anthropic. Il percorso è un laboratorio di apprendimento basato su risorse pubbliche e documentate.
 
 ## Sviluppo locale
 
@@ -28,9 +28,13 @@ npm start
 
 Il progetto esporta l'app Angular in `dist/claude-associate-academy-italia/browser` e serve la build tramite Express.
 
-## Deploy su Render
+## Deploy su GitHub Pages
 
-Il repository include un file `render.yaml` pronto per un deploy web Node su Render.
+Il workflow GitHub Actions pubblica la build statica su GitHub Pages. I progressi restano nel localStorage del browser.
+
+## Deploy alternativo su Render
+
+Il repository include anche un file `render.yaml` per servire la build con Node/Express e offrire l'endpoint di health check.
 
 ## Fonti principali
 
