@@ -40,7 +40,7 @@ export class AcademyPageComponent {
   readonly selectedModule = signal<AcademyModule>(MODULES[0]);
   readonly clickOnly = signal(true);
   readonly completedModuleIds = this.progress.completedModuleIds;
-  readonly syncMessage = this.progress.syncMessage;
+  readonly storageMessage = this.progress.storageMessage;
   readonly progressPercent = computed(() =>
     Math.round((this.completedModuleIds().length / this.modules.length) * 100),
   );

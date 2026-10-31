@@ -1,30 +1,19 @@
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
-import { afterNextRender, Injectable, inject, PLATFORM_ID, signal } from '@angular/core';
-import { catchError, of } from 'rxjs';
+import { afterNextRender, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { MODULES } from './learning-data';
-
-interface SavedProgress {
-  completedModuleIds: string[];
-}
 
 @Injectable({ providedIn: 'root' })
 export class ProgressService {
-  private readonly http = inject(HttpClient);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly storageKey = 'claude-academy-progress';
-  private readonly learnerKey = 'claude-academy-learner';
   readonly completedModuleIds = signal<string[]>([]);
-  readonly syncMessage = signal('Progressi salvati in questo browser.');
-  private learnerId: string | null = null;
+  readonly storageMessage = signal('Progressi salvati solo in questo browser.');
 
   constructor() {
     if (!this.isBrowser) return;
 
     afterNextRender(() => {
       this.completedModuleIds.set(this.readLocalProgress());
-      this.learnerId = this.getLearnerId();
-      this.syncWithServer();
     });
   }
 
@@ -33,27 +22,10 @@ export class ProgressService {
   }
 
   complete(moduleId: string): void {
-    if (!this.isBrowser) return;
-    if (!MODULES.some((module) => module.id === moduleId)) return;
+    if (!this.isBrowser || !MODULES.some((module) => module.id === moduleId)) return;
     const next = [...new Set([...this.completedModuleIds(), moduleId])];
     this.completedModuleIds.set(next);
     this.writeLocalProgress(next);
-    this.http
-      .post<SavedProgress>(
-        '/api/progress',
-        { completedModuleIds: next },
-        { headers: this.headers() },
-      )
-      .pipe(
-        catchError((error: HttpErrorResponse) => {
-          this.syncMessage.set('Salvato in questo browser; sincronizzazione server non riuscita.');
-          console.warn('Salvataggio progressi sul server non riuscito.', error.message);
-          return of(null);
-        }),
-      )
-      .subscribe((saved) => {
-        if (saved) this.syncMessage.set('Progressi salvati su questo dispositivo e sul server.');
-      });
   }
 
   private readLocalProgress(): string[] {
@@ -77,41 +49,10 @@ export class ProgressService {
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(ids));
     } catch (error) {
-      this.syncMessage.set('Memoria browser non disponibile: i progressi non sono stati salvati.');
+      this.storageMessage.set(
+        'Memoria browser non disponibile: i progressi restano solo in questa sessione.',
+      );
       console.error('Salvataggio locale dei progressi non riuscito.', error);
     }
-  }
-
-  private getLearnerId(): string {
-    const saved = localStorage.getItem(this.learnerKey);
-    if (saved && /^[0-9a-f-]{36}$/i.test(saved)) return saved;
-    const generated = crypto.randomUUID();
-    localStorage.setItem(this.learnerKey, generated);
-    return generated;
-  }
-
-  private syncWithServer(): void {
-    this.http
-      .get<SavedProgress>('/api/progress', { headers: this.headers() })
-      .pipe(
-        catchError((error: HttpErrorResponse) => {
-          this.syncMessage.set('Server non disponibile: i progressi restano salvati in questo browser.');
-          console.warn('Sincronizzazione progressi non riuscita.', error.message);
-          return of(null);
-        }),
-      )
-      .subscribe((remoteProgress) => {
-        if (!remoteProgress) return;
-        const validIds = remoteProgress.completedModuleIds.filter((id) =>
-          MODULES.some((module) => module.id === id),
-        );
-        this.completedModuleIds.set(validIds);
-        this.writeLocalProgress(validIds);
-        this.syncMessage.set('Progressi sincronizzati con il server.');
-      });
-  }
-
-  private headers(): HttpHeaders {
-    return new HttpHeaders({ Authorization: `Bearer ${this.learnerId}` });
   }
 }

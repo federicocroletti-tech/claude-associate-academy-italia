@@ -59,7 +59,7 @@
         <section class="progress-panel" aria-label="Avanzamento del percorso">
           <div class="progress-heading"><div><p class="eyebrow">IL TUO AVANZAMENTO</p><strong>{{ completedModuleIds().length }} di {{ modules.length }} moduli completati</strong></div><span>{{ progressPercent() }}%</span></div>
           <div class="progress-track" role="progressbar" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100" aria-label="Avanzamento percorso"><span [style.width.%]="progressPercent()"></span></div>
-          <p class="sync-status" role="status">{{ syncMessage() }}</p>
+          <p class="sync-status" role="status">{{ storageMessage() }}</p>
         </section>
 
         <div class="section-title"><div><p class="eyebrow">IL PROGRAMMA</p><h2>Dal primo prompt alla produzione</h2></div><button class="text-button" (click)="startQuiz()">Fai il ripasso guidato →</button></div>
