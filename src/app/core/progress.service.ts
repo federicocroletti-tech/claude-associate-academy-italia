@@ -1,5 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { afterNextRender, Injectable, inject, PLATFORM_ID, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
 import { MODULES } from './learning-data';
 
@@ -10,31 +11,21 @@ interface SavedProgress {
 @Injectable({ providedIn: 'root' })
 export class ProgressService {
   private readonly http = inject(HttpClient);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly storageKey = 'claude-academy-progress';
   private readonly learnerKey = 'claude-academy-learner';
-  readonly completedModuleIds = signal<string[]>(this.readLocalProgress());
+  readonly completedModuleIds = signal<string[]>([]);
   readonly syncMessage = signal('Progressi salvati in questo browser.');
-  private readonly learnerId = this.getLearnerId();
+  private learnerId: string | null = null;
 
   constructor() {
-    this.http
-      .get<SavedProgress>('/api/progress', { headers: this.headers() })
-      .pipe(
-        catchError((error: HttpErrorResponse) => {
-          this.syncMessage.set('Server non disponibile: i progressi restano salvati in questo browser.');
-          console.warn('Sincronizzazione progressi non riuscita.', error.message);
-          return of(null);
-        }),
-      )
-      .subscribe((remoteProgress) => {
-        if (!remoteProgress) return;
-        const validIds = remoteProgress.completedModuleIds.filter((id) =>
-          MODULES.some((module) => module.id === id),
-        );
-        this.completedModuleIds.set(validIds);
-        this.writeLocalProgress(validIds);
-        this.syncMessage.set('Progressi sincronizzati con il server.');
-      });
+    if (!this.isBrowser) return;
+
+    afterNextRender(() => {
+      this.completedModuleIds.set(this.readLocalProgress());
+      this.learnerId = this.getLearnerId();
+      this.syncWithServer();
+    });
   }
 
   isComplete(moduleId: string): boolean {
@@ -42,6 +33,7 @@ export class ProgressService {
   }
 
   complete(moduleId: string): void {
+    if (!this.isBrowser) return;
     if (!MODULES.some((module) => module.id === moduleId)) return;
     const next = [...new Set([...this.completedModuleIds(), moduleId])];
     this.completedModuleIds.set(next);
@@ -81,6 +73,7 @@ export class ProgressService {
   }
 
   private writeLocalProgress(ids: readonly string[]): void {
+    if (!this.isBrowser) return;
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(ids));
     } catch (error) {
@@ -95,6 +88,27 @@ export class ProgressService {
     const generated = crypto.randomUUID();
     localStorage.setItem(this.learnerKey, generated);
     return generated;
+  }
+
+  private syncWithServer(): void {
+    this.http
+      .get<SavedProgress>('/api/progress', { headers: this.headers() })
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          this.syncMessage.set('Server non disponibile: i progressi restano salvati in questo browser.');
+          console.warn('Sincronizzazione progressi non riuscita.', error.message);
+          return of(null);
+        }),
+      )
+      .subscribe((remoteProgress) => {
+        if (!remoteProgress) return;
+        const validIds = remoteProgress.completedModuleIds.filter((id) =>
+          MODULES.some((module) => module.id === id),
+        );
+        this.completedModuleIds.set(validIds);
+        this.writeLocalProgress(validIds);
+        this.syncMessage.set('Progressi sincronizzati con il server.');
+      });
   }
 
   private headers(): HttpHeaders {
