@@ -28,18 +28,33 @@ export class ProgressService {
     this.writeLocalProgress(next);
   }
 
+  reset(): void {
+    if (!this.isBrowser) return;
+    try {
+      localStorage.removeItem(this.storageKey);
+      this.completedModuleIds.set([]);
+      this.storageMessage.set('Progressi azzerati in questo browser.');
+    } catch (error) {
+      this.storageMessage.set('Azzeramento non riuscito: i progressi sono stati mantenuti.');
+      console.error('Azzeramento dei progressi locali non riuscito.', error);
+    }
+  }
+
   private readLocalProgress(): string[] {
     try {
       const raw = localStorage.getItem(this.storageKey);
       if (!raw) return [];
       const parsed: unknown = JSON.parse(raw);
       if (!Array.isArray(parsed)) throw new Error('Formato progressi non valido.');
-      return parsed.filter(
+      return [...new Set(parsed.filter(
         (value): value is string =>
           typeof value === 'string' && MODULES.some((module) => module.id === value),
-      );
+      ))];
     } catch (error) {
       console.warn('Lettura dei progressi locali non riuscita.', error);
+      this.storageMessage.set(
+        'Lettura non riuscita: i progressi saranno disponibili solo in questa sessione.',
+      );
       return [];
     }
   }

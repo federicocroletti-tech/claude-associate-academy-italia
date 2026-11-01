@@ -22,9 +22,6 @@
   <main class="main-column">
     <header class="topbar">
       <div class="breadcrumbs"><span>Workspace</span><span>/</span><strong>{{ page() === 'lesson' ? selectedModule().title : page() === 'quiz' ? 'Ripasso guidato' : page() === 'summary' ? 'Risultato' : page() === 'sources' ? 'Fonti e verifica' : 'Panoramica' }}</strong></div>
-      <button class="mouse-mode" type="button" [attr.aria-pressed]="clickOnly()" (click)="clickOnly.set(!clickOnly())">
-        <span aria-hidden="true">{{ clickOnly() ? '●' : '○' }}</span> {{ clickOnly() ? 'Solo mouse attiva' : 'Attiva solo mouse' }}
-      </button>
     </header>
 
     @if (page() === 'overview') {
@@ -60,6 +57,7 @@
           <div class="progress-heading"><div><p class="eyebrow">IL TUO AVANZAMENTO</p><strong>{{ completedModuleIds().length }} di {{ modules.length }} moduli completati</strong></div><span>{{ progressPercent() }}%</span></div>
           <div class="progress-track" role="progressbar" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100" aria-label="Avanzamento percorso"><span [style.width.%]="progressPercent()"></span></div>
           <p class="sync-status" role="status">{{ storageMessage() }}</p>
+          <button class="reset-progress-button" type="button" [disabled]="completedModuleIds().length === 0" (click)="resetProgress()">Azzera progressi</button>
         </section>
 
         <div class="section-title"><div><p class="eyebrow">IL PROGRAMMA</p><h2>Dal primo prompt alla produzione</h2></div><button class="text-button" (click)="startQuiz()">Fai il ripasso guidato →</button></div>
@@ -122,7 +120,6 @@
             </section>
           }
         </article>
-        @if (clickOnly()) { <p class="mouse-note">Modalità solo mouse: seleziona una risposta e prosegui con i pulsanti. Non devi scrivere.</p> }
       </section>
     }
 

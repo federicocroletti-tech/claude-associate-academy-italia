@@ -38,7 +38,6 @@ export class AcademyPageComponent {
   readonly page = signal<Page>('overview');
   readonly studyMode = signal<StudyMode>('standard');
   readonly selectedModule = signal<AcademyModule>(MODULES[0]);
-  readonly clickOnly = signal(true);
   readonly completedModuleIds = this.progress.completedModuleIds;
   readonly storageMessage = this.progress.storageMessage;
   readonly progressPercent = computed(() =>
@@ -113,6 +112,7 @@ export class AcademyPageComponent {
 
   resetProgress(): void {
     if (this.completedModuleIds().length === 0) return;
-    this.page.set('overview');
+    if (!window.confirm('Vuoi azzerare tutti i moduli completati? Questa operazione non si può annullare.')) return;
+    this.progress.reset();
   }
 }
